@@ -24,9 +24,13 @@ public class CreditWih implements WorkItemHandler {
 
 	private String baseApiServiceAddr = "http://pam-credit-service-pam7-dallas-take3.apps.na37.openshift.opentlc.com/api";
 	
-	public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
+	public void executeWorkItem(WorkItem workItem, WorkItemManager manager) throws RuntimeException {
 		Map<String, Object> results = new HashMap<String, Object>();
-		results.put("paymentProcessed", this.creditAuth());
+		try {
+			results.put("paymentProcessed", this.creditAuth());
+		} catch (Exception e) {
+			throw new RuntimeException("foo");
+		}
 
 		manager.completeWorkItem(workItem.getId(), results);
 	}
@@ -38,37 +42,33 @@ public class CreditWih implements WorkItemHandler {
 	
 	//TODO better error handling
 	//TODO maybe change name of API end point... technically trying process payment
-	private Boolean creditAuth()
+	private Boolean creditAuth() throws Exception
 	{
 		HttpClient client = HttpClientBuilder.create().build();
 		Boolean paymentProcessed = null;
-		try {
-			HttpGet request = new HttpGet(this.baseApiServiceAddr + "/payment/process");
-			HttpResponse response;
-			response = client.execute(request);
-			BufferedReader rd = new BufferedReader (new InputStreamReader(response.getEntity().getContent()));
-			
-			JsonParser parser = new JsonParser();
-			JsonElement jsonTree = parser.parse(rd);
-			JsonObject jsonObject = jsonTree.getAsJsonObject();
-			JsonObject data = jsonObject.get("data").getAsJsonObject();
-			paymentProcessed = data.get("paymentProcessed").getAsBoolean();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
+		HttpGet request = new HttpGet(this.baseApiServiceAddr + "/payment/process");
+		HttpResponse response;
+		response = client.execute(request);
+		BufferedReader rd = new BufferedReader (new InputStreamReader(response.getEntity().getContent()));
+		
+		JsonParser parser = new JsonParser();
+		JsonElement jsonTree = parser.parse(rd);
+		JsonObject jsonObject = jsonTree.getAsJsonObject();
+		JsonObject data = jsonObject.get("data").getAsJsonObject();
+		paymentProcessed = data.get("paymentProcessed").getAsBoolean();
+
 		
 		return paymentProcessed;
 	}
 	
 	public static void main(String[] args) {
 		CreditWih creditWih = new CreditWih();
-		System.out.println(creditWih.creditAuth());
+		try {
+			System.out.println(creditWih.creditAuth());
+		} catch (Exception e) {
+			
+		}
 	}
 	
 
