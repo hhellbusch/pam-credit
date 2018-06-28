@@ -66,5 +66,10 @@ public class CreditWih implements WorkItemHandler {
 		return paymentProcessed;
 	}
 	
+	public static void main(String[] args) {
+		CreditWih creditWih = new CreditWih();
+		System.out.println(creditWih.creditAuth());
+	}
+	
 
 }
